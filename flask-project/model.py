@@ -5,12 +5,14 @@ import joblib
 from tensorflow.keras.models import load_model
 from utils import get_face_from_image, extract_features
 from keras.preprocessing.sequence import pad_sequences
+import numpy as np
 
 
 face_model = FaceNet()
 max_length = 100
-speech_model = load_model('speech_embedding_model.keras')
-label_encoder = joblib.load('label_encoder.pkl')
+speech_model = load_model('to_load/speech_embedding_model.keras')
+label_encoder = joblib.load('to_load/label_encoder.pkl')
+model = load_model('to_load/final_model.keras')
 
 
 
@@ -29,6 +31,7 @@ def generate_concatenated_embedding(image_path, voice_path):
 
 def identify_person(predictions, threshold=0.9, unknown_label="unknown"):
     max_prob = max(predictions[0])
+    print("max prob ",max_prob)
     # max_index = np.argmax(predictions)
     decoded_labels= label_encoder.inverse_transform(np.argmax(predictions, axis=1))
    
@@ -38,3 +41,8 @@ def identify_person(predictions, threshold=0.9, unknown_label="unknown"):
     else:
         # Confidence below threshold, person is unknown
         return unknown_label
+    
+def predict(image_path, voice_path):
+    embedding = generate_concatenated_embedding(image_path, voice_path)
+    predictions = model.predict(embedding)
+    return identify_person(predictions,  threshold=0.9)
